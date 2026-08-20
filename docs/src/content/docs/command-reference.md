@@ -1,63 +1,80 @@
 ---
 title: Command reference
-description: A compact map of the starter CLI and repository commands.
-order: 4
+description: Every locguard command, scope flag, policy override, and output mode.
+order: 3
 category: Reference
-summary: Cargo, Just, docs, bootstrap, and distribution commands in one place.
+summary: The complete compact CLI surface.
 ---
 
-## Starter CLI
+## Core commands
 
 ```bash
-mycli --help
-mycli --version
-mycli hello
-mycli hello agent
+locguard
+locguard scan
+locguard init
 ```
 
-## Rust development
+`locguard` checks current changes inside Git and performs a full current-tree scan outside Git.
 
-```bash
-just check-fast
-just check
-just build
-just build-release
-just run --help
+`locguard scan` checks the complete eligible source tree.
+
+`locguard init` creates optional `.agents/.locguard.toml` customization config. It is never required for normal use.
+
+## Explicit scope
+
+```text
+-f, --file <PATH>   exact file; repeatable
+-d, --dir <PATH>    directory scope; repeatable
 ```
 
-Equivalent primitives remain available directly:
+Examples:
 
 ```bash
-cargo fmt --all -- --check
-cargo check --locked
-cargo clippy --locked --all-targets -- -D warnings
-cargo test --locked
+locguard --file src/main.rs --file src/server.rs
+locguard --dir src --dir crates/api
 ```
 
-## Docs
+`--file` is explicit intent and can check files such as `Makefile` even though they are not recognized automatically. `--dir` keeps normal source-type recognition inside the requested directory.
 
-```bash
-just docs-install
-just docs-dev
-just docs-check
-just docs-build
-just docs-test
+Explicit scope checks the whole requested scope rather than only changed paths.
+
+## Policy overrides
+
+```text
+--limit <N>              override maximum physical lines
+--warn-percent <N>       override warning percentage
+--no-warn                suppress warnings
+--include <GLOB>         add source pattern; repeatable
+--exclude <GLOB>         exclude pattern; repeatable
+--only <GLOB>            use only supplied source patterns; repeatable
+--no-default-excludes    disable built-in generated/vendor/build exclusions
+--no-ignore              include ignored files
+--no-exempt              apply policy to configured exemptions
 ```
 
-## Distribution
+## Output and performance
 
-```bash
-dist plan
-dist generate
-just release-tag 0.2.0
+```text
+--exact                   report exact counts for offenders
+--quiet                   suppress success/warning human output
+--json                    stable machine-readable output
+-j, --threads <N>         override automatic worker count
+--color auto|always|never color policy for human output
 ```
 
-## Bootstrap
+By default locguard stops reading a violating file as soon as the limit is proven, so human output uses `>1000` and JSON uses `"lines": null`. `--exact` deliberately reads offenders to EOF.
 
-```bash
-just bootstrap --help
-just bootstrap \
-  --cli-name pluck \
-  --npm-package @acme/pluck \
-  --description "A fast file picker"
+## Config selection
+
+```text
+--config <PATH>  use an explicit config file
+--no-config      ignore repository locguard config
+```
+
+## Exit codes
+
+```text
+0  policy passed; warnings are allowed
+1  one or more files violate policy
+2  usage, config, filesystem, or tool execution error
 ```

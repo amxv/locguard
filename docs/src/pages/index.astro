@@ -7,20 +7,20 @@ const docs = (await getCollection("docs")).sort((a, b) => a.data.order - b.data.
 
 const proofPoints = [
   {
-    title: "Rust at the root",
-    body: "Cargo, source, tests, toolchain, and release configuration stay obvious. Web tooling is isolated under docs/."
+    title: "Zero config",
+    body: "Install it and run locguard. A config file exists only when a repository actually needs custom policy."
   },
   {
-    title: "One release graph",
-    body: "dist builds native archives and derives shell, PowerShell, and npm installers from the same release artifacts."
+    title: "Changed-file fast path",
+    body: "Bare checks ask Git for current changes so large repositories do not repeatedly rescan unchanged source files."
   },
   {
-    title: "Agent-friendly checks",
-    body: "A small Justfile exposes fast and full validation while keeping the underlying Cargo commands conventional."
+    title: "Stops at the threshold",
+    body: "Once a file is proven to exceed its limit, locguard stops reading it unless exact counts were requested."
   },
   {
-    title: "Docs without repo pollution",
-    body: "Astro and ZueDocs live in their own workspace and Vercel skips Rust-only changes."
+    title: "Agent-friendly policy",
+    body: "Generated/vendor code is quiet by default and exact legacy exemptions can stay invisible to everyday agents."
   }
 ];
 ---
@@ -33,37 +33,37 @@ const proofPoints = [
 >
   <section class="hero shell">
     <div class="hero__copy">
-      <p class="section-label">Rust CLI starter</p>
-      <h1>Build the command. The release and docs machinery is already here.</h1>
+      <p class="section-label">Source file size guard</p>
+      <h1>Keep every source file small enough to understand, edit, and merge safely.</h1>
       <p class="hero__lede">
-        mycli starts with a clean Rust application structure, strict checks, cross-platform
-        releases, installers, npm distribution, and a documentation site that stays out of
-        the Cargo workspace.
+        locguard is a fast physical-line limit for codebases. It works without setup, respects
+        Git and generated-code conventions, and gives coding agents the same simple invariant
+        in every repository.
       </p>
       <div class="hero__actions">
         <a class="button button--solid" href="/docs/quickstart">Quickstart</a>
-        <a class="button button--ghost" href="/docs">Browse docs</a>
+        <a class="button button--ghost" href="/docs/command-reference">Command reference</a>
       </div>
     </div>
     <aside class="hero__panel">
-      <p class="hero__panel-label">Typical edit loop</p>
+      <p class="hero__panel-label">Everyday loop</p>
       <div class="hero__terminal">
-        <span>$ just check-fast</span>
-        <span>$ cargo run -- hello agent</span>
-        <span>$ just docs-dev</span>
-        <span>$ dist plan</span>
+        <span>$ locguard</span>
+        <span>✓ 7 files checked</span>
+        <span>$ locguard scan</span>
+        <span>✓ 1,443 files checked</span>
       </div>
     </aside>
   </section>
 
   <section class="shell section-grid">
     <div class="section-heading">
-      <p class="section-label">Baseline</p>
-      <h2>Everything around the idea is intentionally predictable.</h2>
+      <p class="section-label">Simple invariant</p>
+      <h2>Physical file length, deliberately.</h2>
       <p>
-        Product code belongs in Rust modules. Release configuration belongs in dist-workspace.toml.
-        Documentation tooling belongs in docs/. The boundaries are visible before an agent
-        reads a single implementation file.
+        Comments and blank lines count because locguard is not measuring semantic complexity.
+        It is keeping source files modular, reducing shared edit hotspots, and limiting the
+        amount of context a human or coding agent must load to work safely.
       </p>
     </div>
     <div class="proof-grid">
@@ -79,7 +79,7 @@ const proofPoints = [
   <section class="shell docs-teaser">
     <div class="section-heading">
       <p class="section-label">Documentation</p>
-      <h2>Start with the project flow, then go deeper only when you need it.</h2>
+      <h2>Start with no config. Customize only where your repository needs it.</h2>
     </div>
     <div class="docs-teaser__grid">
       {docs.map((entry) => (

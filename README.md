@@ -1,127 +1,106 @@
-# rust-cli-template
+# locguard
 
-A Rust-first template for shipping command-line tools without rebuilding the same OSS plumbing every time.
+A fast, zero-config CLI that keeps source files below a configurable line limit.
 
-Included from day one:
-
-- Rust 2024 CLI structure with `clap`, tests, formatting, and strict Clippy checks
-- pinned Rust toolchain for reproducible local and CI builds
-- `dist`-generated GitHub Releases for macOS, Linux, and Windows
-- shell, PowerShell, and npm installers generated from the same release artifacts
-- GitHub artifact attestations
-- a self-contained Astro/ZueDocs site under `docs/`
-- Vercel affected-path filtering so Rust-only commits do not deploy docs
-- one bootstrap command for project, npm, docs, license, and toolchain identity
-- repo-local release instructions for coding agents
-
-## Start a new CLI
-
-Create the repository from this GitHub template:
+`locguard` defaults to 1,000 physical lines per source file. It ignores Git-ignored files, dependencies, generated code, vendored code, and build output, then scans only the source files that matter.
 
 ```bash
-gh repo create acme/pluck \
-  --public \
-  --template amxv/rust-cli-template \
-  --clone
-cd pluck
+locguard
+# ✓ 7 files checked
+
+locguard scan
+# ✓ 1,443 files checked
 ```
 
-Initialize its identity:
+## Install
+
+The npm package installs the native `locguard` binary:
 
 ```bash
-just bootstrap \
-  --cli-name pluck \
-  --npm-package @acme/pluck \
-  --description "A fast file picker" \
-  --license Apache-2.0 \
-  --rust-version 1.98.0
+npm install -g locguard-cli
 ```
 
-The GitHub owner/repository are inferred from `origin` when the repo was created from the template. The Cargo package defaults to the CLI name. Pass `--crate-name` only when the crate and executable genuinely need different names.
+Native archives and shell/PowerShell installers are also published with GitHub Releases.
 
-To make the crate publishable on crates.io as well, add `--crates-io` after confirming the crate name is available. The default is disabled so cloning the template cannot accidentally publish a placeholder package.
+## Usage
 
-## Local development
+Bare `locguard` is optimized for local and agent check loops:
+
+```bash
+locguard
+```
+
+Inside Git it checks staged, unstaged, and nonignored untracked source files. Use `scan` for the authoritative full-tree check, such as in CI:
+
+```bash
+locguard scan
+```
+
+Scope a check explicitly when useful:
+
+```bash
+locguard --file src/main.rs --file src/server.rs
+locguard --dir src --dir crates/api
+```
+
+A file over the limit fails with exit code 1:
+
+```text
+FAIL src/runtime.rs  >1000
+
+1 file exceeds the 1000-line limit
+```
+
+Warnings begin at 90% of the effective limit by default.
+
+## Configuration
+
+No setup is required. Run `locguard init` only if you want to customize the defaults. It creates `.agents/.locguard.toml`:
+
+```toml
+limit = 1000
+warn_percent = 90
+
+include = []
+exclude = []
+
+[exempt]
+files = []
+```
+
+Use `include` for project-specific source files such as `Makefile`, `exclude` for project-specific categories, and `[exempt].files` for exact legacy files that should be permanently grandfathered without teaching every agent about them.
+
+CLI flags override repository configuration:
+
+```bash
+locguard --limit 800
+locguard --include '**/*.foo'
+locguard scan --no-exempt
+locguard scan --json
+```
+
+## Why it is fast
+
+`locguard` is a threshold checker, not a code-analysis engine. It does not parse ASTs or decode source text just to count lines.
+
+- Git supplies changed/full candidate paths and ignore semantics.
+- Source-type and generated/vendor filters run before files are opened.
+- Violating files stop being read as soon as line `limit + 1` is proven.
+- File scans run with modest parallelism and reusable buffers.
+- Newlines are counted directly from bytes.
+
+Physical lines include comments and blank lines because the invariant is about keeping files small, modular, merge-friendly, and easy for coding agents to navigate.
+
+## Development
 
 ```bash
 just check-fast
 just check
-just build
-just run --help
-just run hello agent
-```
-
-The underlying commands remain ordinary Cargo commands; the `Justfile` is only a memorable project surface.
-
-## Project layout
-
-```text
-Cargo.toml              package identity, dependencies, lints
-Cargo.lock              reproducible application dependency graph
-rust-toolchain.toml     pinned Rust toolchain
-src/main.rs             process boundary only
-src/lib.rs              reusable application entrypoint
-src/cli.rs              clap command model
-src/commands/           command implementations
-tests/                  CLI integration tests
-dist-workspace.toml               release/install distribution config
-scripts/bootstrap.py    one-time/re-runnable identity setup
-docs/                   isolated Astro/ZueDocs application
-.github/workflows/      CI, docs CI, generated release workflow
-.agents/skills/release/ release checklist for future agents
-```
-
-JavaScript dependencies, Astro state, and Vercel configuration live entirely under `docs/`; the repository root stays focused on Rust.
-
-## Docs
-
-```bash
-just docs-install
-just docs-dev
 just docs-check
 just docs-build
 ```
 
-For Vercel, configure the project Root Directory as `docs`. `docs/vercel.json` skips builds when a push contains no `docs/` changes.
-
-## Distribution
-
-`dist-workspace.toml` pins `cargo-dist` and generates:
-
-- GitHub release archives for Apple Silicon + Intel macOS, ARM64 + x64 Linux, and x64 Windows
-- `curl | sh` installer
-- PowerShell installer
-- generated npm binary package
-- checksums and GitHub artifact attestations
-
-Inspect a release plan with:
-
-```bash
-dist plan
-```
-
-Regenerate the release workflow after changing `dist-workspace.toml`:
-
-```bash
-dist generate
-```
-
-The generated `.github/workflows/release.yml` is committed. Do not hand-edit it; change `dist-workspace.toml` and regenerate instead.
-
-## Release
-
-Update the version in `Cargo.toml`, update `docs/src/content/docs/changelog.md`, run the checks, commit and push, then tag the exact Cargo version:
-
-```bash
-just check
-just docs-check
-just docs-build
-just release-tag 0.2.0
-```
-
-The tag triggers the generated `dist` workflow. GitHub Releases and installers are published automatically. npm publishing requires a repository secret named `NPM_TOKEN`.
-
-See `.agents/skills/release/SKILL.md` and `CONTRIBUTORS.md` for the full release contract.
+See the [documentation](https://locguard.ashray.xyz) for configuration and the complete command reference.
 
 ## License
 

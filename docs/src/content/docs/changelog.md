@@ -1,14 +1,15 @@
 ---
 title: Changelog
-description: Release notes for this CLI.
+description: User-facing locguard release history.
 order: 99
-category: Distribution
-summary: User-facing release history.
+category: Reference
+summary: New commands, policy behavior, performance changes, and compatibility notes.
 ---
 
-Keep the newest release first. Describe user-visible behavior and important installation or compatibility changes rather than copying raw commit subjects.
+## 0.1.0 - 2026-08-21
 
-## 0.1.0 - YYYY-MM-DD
-
-- Initial release.
-- Replace this placeholder with the first usable command set before tagging.
+- Initial locguard CLI with zero-config 1,000-line enforcement and 90% warnings.
+- Fast Git changed-file checks plus authoritative full-tree scans.
+- Broad source-extension recognition with generated, vendored, dependency, cache, and build-output defaults.
+- Optional `.agents/.locguard.toml` configuration, exact legacy exemptions, glob includes/excludes, and path-specific limits.
+- Repeatable `--file` / `--dir` scopes, JSON output, exact-count mode, and stable exit codes.

@@ -1,49 +1,65 @@
 ---
 title: Quickstart
-description: Go from a fresh clone to a checked Rust CLI and local docs site.
+description: Install locguard and start enforcing small source files with no setup.
 order: 1
 category: Start
-summary: The shortest path from template clone to product code.
+summary: Install once, run locguard, and add the full scan to CI.
 ---
 
-## Create the repository
+## Install
+
+The npm package installs the native `locguard` binary:
 
 ```bash
-gh repo create acme/pluck \
-  --public \
-  --template amxv/rust-cli-template \
-  --clone
-cd pluck
+npm install -g locguard-cli
 ```
 
-## Initialize project identity
+Native archives and shell/PowerShell installers are also attached to GitHub Releases.
+
+## Run it
+
+No initialization or config file is required:
 
 ```bash
-just bootstrap \
-  --cli-name pluck \
-  --npm-package @acme/pluck \
-  --description "A fast file picker" \
-  --license Apache-2.0 \
-  --rust-version 1.98.0
+locguard
 ```
 
-The bootstrap script detects the new GitHub origin and synchronizes Cargo, `dist`, docs, npm, license, and toolchain metadata.
+Inside a Git repository, bare `locguard` checks staged, unstaged, and nonignored untracked source files. If nothing eligible changed:
 
-## Run the starter
+```text
+✓ no source files changed
+```
+
+When files changed:
+
+```text
+✓ 7 files checked
+```
+
+A file above the default 1,000-line limit fails:
+
+```text
+FAIL src/runtime.rs  >1000
+
+1 file exceeds the 1000-line limit
+```
+
+## Check the whole repository
+
+Use the full scan for CI, pre-push checks, and repository audits:
 
 ```bash
-just check
-cargo run -- --help
-cargo run -- hello agent
+locguard scan
 ```
 
-The starter command is intentionally tiny. Replace it rather than building abstractions around the greeting example.
+The scan includes tracked files and nonignored untracked files while skipping high-confidence dependency, vendor, generated, cache, and build-output trees.
 
-## Run the docs site
+## Customize only when needed
+
+`locguard init` is optional. Run it only when the defaults need project-specific customization:
 
 ```bash
-just docs-install
-just docs-dev
+locguard init
 ```
 
-The docs application lives completely under `docs/`, including its dependencies and Vercel configuration.
+It creates `.agents/.locguard.toml`. Most repositories should not need one.

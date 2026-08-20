@@ -7,8 +7,7 @@ ci = ["github"]
 installers = ["shell", "powershell", "npm"]
 publish-jobs = ["npm"]
 install-path = "CARGO_HOME"
-npm-scope = "@amxv"
-npm-package = "rust-cli-template"
+npm-package = "locguard-cli"
 github-attestations = true
 targets = [
   "aarch64-apple-darwin",

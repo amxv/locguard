@@ -1,32 +1,40 @@
 [package]
-name = "mycli"
+name = "locguard"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.98.0"
-description = "A Rust CLI starter with releases, npm distribution, and docs wired up"
+description = "A fast, zero-config CLI that keeps source files below a configurable line limit"
 license = "Apache-2.0"
-repository = "https://github.com/amxv/rust-cli-template"
-homepage = "https://github.com/amxv/rust-cli-template#readme"
+repository = "https://github.com/amxv/locguard"
+homepage = "https://locguard.ashray.xyz"
 readme = "README.md"
 publish = false
 include = ["/src/**", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE"]
-keywords = ["cli", "rust", "template"]
+keywords = ["cli", "lint", "code-quality", "developer-tools"]
 categories = ["command-line-utilities"]
 
 [package.metadata.dist]
 dist = true
 
 [[bin]]
-name = "mycli"
+name = "locguard"
 path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0"
+bytecount = "0.6"
 clap = { version = "4.5", features = ["derive"] }
+globset = "0.4"
+ignore = "0.4"
+rayon = "1.11"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.9"
 
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.1"
+tempfile = "3.20"
 
 [lints.rust]
 unsafe_code = "forbid"

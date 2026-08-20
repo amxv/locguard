@@ -9,6 +9,7 @@
 
 # Local tooling
 /.vercel/
+/tmp/
 *.tgz
 __pycache__/
 *.pyc
