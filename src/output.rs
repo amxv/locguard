@@ -85,28 +85,22 @@ pub fn render(report: &Report, mode: DiscoveryMode, cli: &Cli) -> Result<()> {
     let stdout = io::stdout();
     let mut out = stdout.lock();
 
-    if !cli.quiet {
-        for warning in &report.warnings {
-            writeln!(
-                out,
-                "{} {}  {} / {}",
-                style_label("WARN", "33", color),
-                warning.path,
-                warning.lines,
-                warning.limit
-            )
-            .context("failed to write warning output")?;
-        }
+    let show_warnings = !cli.quiet && !report.warnings.is_empty();
+    if !report.violations.is_empty() || show_warnings {
+        write_diagnostic_header(&mut out, report, show_warnings)?;
     }
 
+    let common_limit = common_visible_limit(report, show_warnings);
     for violation in &report.violations {
-        let count = violation
-            .lines
-            .map(|lines| lines.to_string())
-            .unwrap_or_else(|| format!(">{}", violation.greater_than));
+        let count = match (violation.lines, common_limit) {
+            (Some(lines), Some(_)) => format!("  {lines}"),
+            (Some(lines), None) => format!("  {lines} >{}", violation.greater_than),
+            (None, Some(_)) => String::new(),
+            (None, None) => format!("  >{}", violation.greater_than),
+        };
         writeln!(
             out,
-            "{} {}  {}",
+            "{} {}{}",
             style_label("FAIL", "31", color),
             violation.path,
             count
@@ -114,9 +108,26 @@ pub fn render(report: &Report, mode: DiscoveryMode, cli: &Cli) -> Result<()> {
         .context("failed to write failure output")?;
     }
 
+    if show_warnings {
+        for warning in &report.warnings {
+            let limit = if common_limit.is_some() {
+                String::new()
+            } else {
+                format!(" / {}", warning.limit)
+            };
+            writeln!(
+                out,
+                "{} {}  {}{}",
+                style_label("WARN", "33", color),
+                warning.path,
+                warning.lines,
+                limit
+            )
+            .context("failed to write warning output")?;
+        }
+    }
+
     if !report.violations.is_empty() {
-        writeln!(out).context("failed to write failure separator")?;
-        write_violation_summary(&mut out, &report.violations)?;
         return Ok(());
     }
 
@@ -151,30 +162,47 @@ pub fn render(report: &Report, mode: DiscoveryMode, cli: &Cli) -> Result<()> {
     Ok(())
 }
 
-fn write_violation_summary(out: &mut impl Write, violations: &[Violation]) -> Result<()> {
-    let count = violations.len();
-    let first_limit = violations[0].greater_than;
-    let same_limit = violations
-        .iter()
-        .all(|violation| violation.greater_than == first_limit);
-    if same_limit {
-        let verb = if count == 1 { "exceeds" } else { "exceed" };
+fn write_diagnostic_header(
+    out: &mut impl Write,
+    report: &Report,
+    show_warnings: bool,
+) -> Result<()> {
+    let violation_count = report.violations.len();
+    if let Some(limit) = common_visible_limit(report, show_warnings) {
+        if violation_count == 0 {
+            writeln!(out, "Current LOC limit: {limit} lines.")?;
+        } else {
+            let noun = plural(violation_count, "file", "files");
+            writeln!(
+                out,
+                "Current LOC limit: {limit} lines, {violation_count} {noun} exceeded this limit."
+            )?;
+        }
+    } else if violation_count == 0 {
+        writeln!(out, "Configured LOC limits vary by path.")?;
+    } else {
+        let noun = plural(violation_count, "file", "files");
         writeln!(
             out,
-            "{} {} {} the {}-line limit",
-            count,
-            plural(count, "file", "files"),
-            verb,
-            first_limit
+            "{violation_count} {noun} exceeded configured LOC limits."
         )?;
-    } else {
-        if count == 1 {
-            writeln!(out, "1 file exceeds its configured line limit")?;
-        } else {
-            writeln!(out, "{count} files exceed their configured line limits")?;
-        }
     }
     Ok(())
+}
+
+fn common_visible_limit(report: &Report, show_warnings: bool) -> Option<usize> {
+    let mut limits = report
+        .violations
+        .iter()
+        .map(|violation| violation.greater_than)
+        .chain(
+            show_warnings
+                .then_some(report.warnings.iter().map(|warning| warning.limit))
+                .into_iter()
+                .flatten(),
+        );
+    let first = limits.next()?;
+    limits.all(|limit| limit == first).then_some(first)
 }
 
 fn use_color(mode: ColorMode) -> bool {

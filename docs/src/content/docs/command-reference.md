@@ -62,7 +62,7 @@ Explicit scope checks the whole requested scope rather than only changed paths.
 --color auto|always|never color policy for human output
 ```
 
-By default locguard stops reading a violating file as soon as the limit is proven, so human output uses `>1000` and JSON uses `"lines": null`. `--exact` deliberately reads offenders to EOF.
+By default locguard stops reading a violating file as soon as the limit is proven. Human output prints the effective limit and failure count once at the top instead of repeating `>1000` on every failure line; JSON still uses `"lines": null`. `--exact` deliberately reads offenders to EOF.
 
 ## Config selection
 

@@ -115,9 +115,9 @@ const formatFiles = (files: number) => new Intl.NumberFormat("en-US").format(fil
         <p><i>$</i> locguard</p>
         <p class="is-pass">✓ 7 files checked</p>
         <p class="landing-terminal__gap"><i>$</i> locguard scan</p>
-        <p class="is-fail">FAIL&nbsp; src/runtime.rs&nbsp; &gt;1000</p>
-        <p class="is-fail">FAIL&nbsp; src/server.ts&nbsp;&nbsp; &gt;1000</p>
-        <p class="is-muted">2 files exceed the 1000-line limit</p>
+        <p class="is-muted">Current LOC limit: 1000 lines, 2 files exceeded this limit.</p>
+        <p class="is-fail">FAIL&nbsp; src/runtime.rs</p>
+        <p class="is-fail">FAIL&nbsp; src/server.ts</p>
       </div>
       <div class="landing-terminal__footer">
         <span>physical lines</span>

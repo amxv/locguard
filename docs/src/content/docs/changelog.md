@@ -6,6 +6,12 @@ category: Reference
 summary: New commands, policy behavior, performance changes, and compatibility notes.
 ---
 
+## 0.1.2 - 2026-08-21
+
+- Make human diagnostics more token-efficient by printing the active LOC limit and number of failing files once at the top instead of repeating the limit on every WARN/FAIL line.
+- Keep warning line counts visible while omitting redundant `/ limit` suffixes when all visible diagnostics share the same effective limit.
+- Preserve per-line thresholds only for the uncommon mixed path-specific-limit case, where omitting them would make the output ambiguous.
+
 ## 0.1.1 - 2026-08-21
 
 - Skip binary-like and UTF-16-style source fixtures instead of failing the entire repository when a recognized extension contains NUL bytes.

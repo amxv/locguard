@@ -39,9 +39,8 @@ When files changed:
 A file above the default 1,000-line limit fails:
 
 ```text
-FAIL src/runtime.rs  >1000
-
-1 file exceeds the 1000-line limit
+Current LOC limit: 1000 lines, 1 file exceeded this limit.
+FAIL src/runtime.rs
 ```
 
 ## Check the whole repository

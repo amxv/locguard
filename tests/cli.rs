@@ -114,10 +114,7 @@ fn bare_git_check_catches_new_oversized_source_file() {
         .args(["--color", "never"])
         .assert()
         .code(1)
-        .stdout(predicate::str::contains("FAIL src/new.rs  >1000"))
-        .stdout(predicate::str::contains(
-            "1 file exceeds the 1000-line limit",
-        ));
+        .stdout("Current LOC limit: 1000 lines, 1 file exceeded this limit.\nFAIL src/new.rs\n");
 }
 
 #[test]
@@ -175,7 +172,8 @@ fn explicit_file_bypasses_default_source_type_detection() {
         .args(["--file", "Makefile", "--color", "never"])
         .assert()
         .code(1)
-        .stdout(predicate::str::contains("FAIL Makefile  >1000"));
+        .stdout(predicate::str::contains("FAIL Makefile\n"))
+        .stdout(predicate::str::contains(">1000").not());
 }
 
 #[test]
@@ -252,7 +250,10 @@ limit = 1500
         .args(["scan", "--limit", "1000", "--color", "never"])
         .assert()
         .code(1)
-        .stdout(predicate::str::contains(">1000"));
+        .stdout(predicate::str::contains(
+            "Current LOC limit: 1000 lines, 1 file exceeded this limit.",
+        ))
+        .stdout(predicate::str::contains(">1000").not());
 }
 
 #[test]
@@ -266,7 +267,11 @@ fn warnings_use_relative_threshold_and_can_be_suppressed() {
         .args(["scan", "--color", "never"])
         .assert()
         .success()
-        .stdout(predicate::str::contains("WARN src/near.rs  900 / 1000"))
+        .stdout(predicate::str::starts_with(
+            "Current LOC limit: 1000 lines.\n",
+        ))
+        .stdout(predicate::str::contains("WARN src/near.rs  900\n"))
+        .stdout(predicate::str::contains("/ 1000").not())
         .stdout(predicate::str::contains("1 warning"));
 
     cli()
@@ -288,7 +293,35 @@ fn physical_lines_count_unterminated_final_line() {
         .args(["scan", "--color", "never"])
         .assert()
         .code(1)
-        .stdout(predicate::str::contains(">1000"));
+        .stdout(predicate::str::contains("FAIL src/exact.rs\n"))
+        .stdout(predicate::str::contains(">1000").not());
+}
+
+#[test]
+fn mixed_limits_keep_thresholds_only_where_needed() {
+    let repo = repo();
+    write_lines(&repo.path().join("src/main.rs"), 1001);
+    write_lines(&repo.path().join("migrations/001.sql"), 1501);
+    write_config(
+        repo.path(),
+        r#"
+[[override]]
+files = ["migrations/**/*.sql"]
+limit = 1500
+"#,
+    );
+    commit_all(repo.path());
+
+    cli()
+        .current_dir(repo.path())
+        .args(["scan", "--color", "never"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::starts_with(
+            "2 files exceeded configured LOC limits.\n",
+        ))
+        .stdout(predicate::str::contains("FAIL migrations/001.sql  >1500\n"))
+        .stdout(predicate::str::contains("FAIL src/main.rs  >1000\n"));
 }
 
 #[test]

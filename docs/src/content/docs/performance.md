@@ -34,7 +34,8 @@ This also means locguard automatically benefits when a user has Git's untracked 
 With a 1,000-line limit, a 50,000-line offender does not need to be read to EOF. Once physical line 1,001 is proven, default scanning stops and reports:
 
 ```text
-FAIL src/monster.rs  >1000
+Current LOC limit: 1000 lines, 1 file exceeded this limit.
+FAIL src/monster.rs
 ```
 
 Use `--exact` only when the exact offender count is actually useful.

@@ -46,9 +46,8 @@ locguard --dir src --dir crates/api
 A file over the limit fails with exit code 1:
 
 ```text
-FAIL src/runtime.rs  >1000
-
-1 file exceeds the 1000-line limit
+Current LOC limit: 1000 lines, 1 file exceeded this limit.
+FAIL src/runtime.rs
 ```
 
 Warnings begin at 90% of the effective limit by default.
