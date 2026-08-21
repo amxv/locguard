@@ -73,7 +73,7 @@ const proofPoints = [
   }
 ];
 
-const maxSpeedup = Math.max(...benchmarks.map((row) => row.wcMs / row.locguardMs));
+const maxBenchmarkMs = Math.max(...benchmarks.flatMap((row) => [row.locguardMs, row.wcMs]));
 const formatSeconds = (ms: number) => `${(ms / 1000).toFixed(ms >= 10000 ? 1 : 2)}s`;
 const formatFiles = (files: number) => new Intl.NumberFormat("en-US").format(files);
 ---
@@ -140,7 +140,13 @@ const formatFiles = (files: number) => new Intl.NumberFormat("en-US").format(fil
       </p>
     </div>
 
-    <div class="landing-benchmark-chart" aria-label="Benchmark speedup compared with wc">
+    <div class="landing-benchmark-legend" aria-label="Benchmark series">
+      <span><i class="is-locguard"></i>locguard</span>
+      <span><i class="is-wc"></i>wc</span>
+      <small>wall time · shared scale · lower is better</small>
+    </div>
+
+    <div class="landing-benchmark-chart" aria-label="Benchmark wall time for locguard and wc">
       {benchmarks.map((row) => {
         const speedup = row.wcMs / row.locguardMs;
         return (
@@ -155,15 +161,35 @@ const formatFiles = (files: number) => new Intl.NumberFormat("en-US").format(fil
               </small>
             </div>
             <div class="landing-benchmark-row__graph">
-              <div class="landing-benchmark-row__track">
-                <div
-                  class="landing-benchmark-row__bar"
-                  style={`--bar-width: ${(speedup / maxSpeedup) * 100}%`}
-                ></div>
+              <div class="landing-benchmark-row__bars">
+                <div class="landing-benchmark-row__series">
+                  <div class="landing-benchmark-row__series-head">
+                    <span><i class="is-locguard"></i>locguard</span>
+                    <strong>{formatSeconds(row.locguardMs)}</strong>
+                  </div>
+                  <div class="landing-benchmark-row__track">
+                    <div
+                      class="landing-benchmark-row__bar landing-benchmark-row__bar--locguard"
+                      style={`--bar-width: ${(row.locguardMs / maxBenchmarkMs) * 100}%`}
+                    ></div>
+                  </div>
+                </div>
+                <div class="landing-benchmark-row__series">
+                  <div class="landing-benchmark-row__series-head">
+                    <span><i class="is-wc"></i>wc</span>
+                    <strong>{formatSeconds(row.wcMs)}</strong>
+                  </div>
+                  <div class="landing-benchmark-row__track">
+                    <div
+                      class="landing-benchmark-row__bar landing-benchmark-row__bar--wc"
+                      style={`--bar-width: ${(row.wcMs / maxBenchmarkMs) * 100}%`}
+                    ></div>
+                  </div>
+                </div>
               </div>
               <div class="landing-benchmark-row__numbers">
                 <strong>{speedup.toFixed(2)}× faster</strong>
-                <span>{formatSeconds(row.locguardMs)} locguard · {formatSeconds(row.wcMs)} wc</span>
+                <span>{formatSeconds(row.wcMs - row.locguardMs)} less wall time</span>
               </div>
             </div>
           </article>

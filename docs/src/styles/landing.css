@@ -236,6 +236,44 @@
     border-top: 1px solid var(--ink);
   }
 
+  .landing-benchmark-legend {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+  }
+
+  .landing-benchmark-legend span,
+  .landing-benchmark-row__series-head span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+  }
+
+  .landing-benchmark-legend i,
+  .landing-benchmark-row__series-head i {
+    width: 0.52rem;
+    height: 0.52rem;
+  }
+
+  .landing-benchmark-legend i.is-locguard,
+  .landing-benchmark-row__series-head i.is-locguard {
+    background: var(--signal);
+  }
+
+  .landing-benchmark-legend i.is-wc,
+  .landing-benchmark-row__series-head i.is-wc {
+    background: color-mix(in srgb, #667eea 88%, var(--ink));
+  }
+
+  .landing-benchmark-legend small {
+    margin-left: auto;
+    font-size: inherit;
+  }
+
   .landing-benchmark-row {
     display: grid;
     grid-template-columns: minmax(13rem, 0.34fr) minmax(0, 0.66fr);
@@ -275,26 +313,55 @@
 
   .landing-benchmark-row__graph {
     display: grid;
-    grid-template-columns: minmax(7rem, 1fr) minmax(13rem, auto);
+    grid-template-columns: minmax(0, 1fr) minmax(8.5rem, auto);
     gap: 1.5rem;
     align-items: center;
   }
 
+  .landing-benchmark-row__bars {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .landing-benchmark-row__series-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.42rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+  }
+
+  .landing-benchmark-row__series-head strong {
+    color: var(--ink);
+    font-weight: 550;
+  }
+
   .landing-benchmark-row__track {
     position: relative;
-    height: 0.82rem;
+    height: 1rem;
     background: var(--surface-muted);
   }
 
   .landing-benchmark-row__bar {
     width: var(--bar-width);
-    min-width: 1rem;
+    min-width: 0.45rem;
     height: 100%;
+  }
+
+  .landing-benchmark-row__bar--locguard {
     background: var(--signal);
   }
 
+  .landing-benchmark-row__bar--wc {
+    background: color-mix(in srgb, #667eea 88%, var(--ink));
+  }
+
   .landing-benchmark-row__numbers {
-    min-width: 13rem;
+    min-width: 8.5rem;
   }
 
   .landing-benchmark-row__numbers strong {
@@ -575,6 +642,15 @@
     .landing-benchmark-row__graph {
       grid-template-columns: 1fr;
       gap: 0.75rem;
+    }
+
+    .landing-benchmark-legend {
+      flex-wrap: wrap;
+    }
+
+    .landing-benchmark-legend small {
+      width: 100%;
+      margin-left: 0;
     }
 
     .landing-benchmark-note__machine {
