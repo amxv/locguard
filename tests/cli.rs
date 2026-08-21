@@ -347,18 +347,41 @@ fn exact_mode_reports_exact_violation_count() {
 }
 
 #[test]
-fn binary_looking_source_is_a_tool_error() {
+fn binary_like_source_bytes_are_skipped() {
     let repo = repo();
     fs::create_dir_all(repo.path().join("src")).unwrap();
-    fs::write(repo.path().join("src/bad.rs"), b"fn main() {}\0binary").unwrap();
+    fs::write(repo.path().join("src/utf16le.css"), b"a\0\n\0b\0\n\0").unwrap();
     commit_all(repo.path());
+
+    cli()
+        .current_dir(repo.path())
+        .args(["scan", "--limit", "2", "--color", "never"])
+        .assert()
+        .success()
+        .stdout("✓ 0 files checked\n");
+}
+
+#[cfg(unix)]
+#[test]
+fn small_unreadable_source_is_still_a_tool_error() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let repo = repo();
+    let path = repo.path().join("src/small.rs");
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(&path, b"fn x() {}\n").unwrap();
+    commit_all(repo.path());
+
+    let mut permissions = fs::metadata(&path).unwrap().permissions();
+    permissions.set_mode(0o000);
+    fs::set_permissions(&path, permissions).unwrap();
 
     cli()
         .current_dir(repo.path())
         .args(["scan"])
         .assert()
         .code(2)
-        .stderr(predicate::str::contains("NUL byte"));
+        .stderr(predicate::str::contains("failed to open source file"));
 }
 
 #[test]

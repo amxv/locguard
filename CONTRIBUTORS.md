@@ -3,16 +3,17 @@
 ## Prerequisites
 
 - Rust from `rust-toolchain.toml` (currently 1.98.0)
-- `just`
 - Bun for documentation work
 - `dist` 0.32.0 when changing or inspecting release configuration
 
 ## Development
 
 ```bash
-just check-fast
-just check
-just build
+cargo fmt --all -- --check
+cargo check --locked
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
+cargo build --locked
 ./target/debug/locguard --help
 ./target/debug/locguard scan
 ```
@@ -22,11 +23,12 @@ The full Rust check is format, strict Clippy, then tests. End-to-end CLI behavio
 ## Docs
 
 ```bash
-just docs-install
-just docs-test
-just docs-check
-just docs-build
-just docs-dev
+cd docs
+bun install --frozen-lockfile
+bun run test:vercel
+bun run check
+bun run build
+bun run dev
 ```
 
 Run docs checks/builds serially. Vercel uses Root Directory `docs`.

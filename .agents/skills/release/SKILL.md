@@ -96,9 +96,11 @@ A missing required publishing secret is a release blocker; configure it through 
 Run from the repository root, serially:
 
 ```bash
-just check
-just docs-check
-just docs-build
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
+cd docs && bun install --frozen-lockfile && bun run test:vercel && bun run check && bun run build
+cd ..
 dist plan
 git diff --check
 ```
@@ -128,13 +130,16 @@ Confirm the pushed commit is the commit intended for release.
 
 ## 7. Tag the Cargo version
 
-Create the tag through the repository helper:
+Verify the Cargo version and create the matching tag directly:
 
 ```bash
-just release-tag ${VERSION}
+ACTUAL="$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')"
+test "$ACTUAL" = "$VERSION"
+git tag "v${VERSION}"
+git push origin "v${VERSION}"
 ```
 
-The helper verifies that `${VERSION}` matches Cargo metadata before pushing `v${VERSION}`.
+Never tag a version that does not exactly match Cargo metadata.
 
 Do not create an alternate tag merely to recover from a failed workflow. Fix the actual failure and retry the same release workflow/tag when possible.
 

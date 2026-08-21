@@ -39,9 +39,17 @@ FAIL src/monster.rs  >1000
 
 Use `--exact` only when the exact offender count is actually useful.
 
+## Free file-size proof
+
+Locguard already reads file metadata so it can reject symlinks safely. That makes byte length free information: a physical line requires at least one byte, so a file whose byte length is below its warning threshold cannot possibly warn or fail.
+
+Locguard still opens the file so unreadable source remains an operational error, but it can skip the content read entirely for these small files.
+
 ## Physical lines, directly from bytes
 
-Comments and blank lines count. UTF-8 decoding and language parsers are unnecessary; line boundaries are determined by newline bytes, with a final unterminated line counted normally.
+Comments and blank lines count. For ordinary source bytes, UTF-8 decoding and language parsers are unnecessary; line boundaries are determined by newline bytes, with a final unterminated line counted normally.
+
+If the first 64 KiB of an otherwise eligible source path contains a NUL byte, locguard treats it as binary-like and skips it. That avoids inventing encoding semantics for UTF-16 or binary fixtures while keeping the scanner parser-free.
 
 This keeps the hot path portable and language-independent.
 

@@ -43,13 +43,17 @@ Guidance for coding agents working on `locguard`.
 Fast Rust loop:
 
 ```bash
-just check-fast
+cargo fmt --all -- --check
+cargo check --locked
+cargo clippy --locked --all-targets -- -D warnings
 ```
 
 Full Rust validation:
 
 ```bash
-just check
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
 ```
 
 Useful focused checks:
@@ -67,9 +71,11 @@ cargo run -- scan
 Docs, run serially:
 
 ```bash
-just docs-test
-just docs-check
-just docs-build
+cd docs
+bun install --frozen-lockfile
+bun run test:vercel
+bun run check
+bun run build
 ```
 
 Release configuration:

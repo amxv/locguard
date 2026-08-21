@@ -2,27 +2,80 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "zuedocs/layouts/BaseLayout.astro";
 import { primaryNav, siteConfig } from "../data/docs";
+import "../styles/landing.css";
 
 const docs = (await getCollection("docs")).sort((a, b) => a.data.order - b.data.order);
 
-const proofPoints = [
+// Pinned, measured snapshots. Timing values are updated from the final benchmark pass.
+const benchmarks = [
   {
-    title: "Zero config",
-    body: "Install it and run locguard. A config file exists only when a repository actually needs custom policy."
+    name: "VS Code",
+    repo: "microsoft/vscode",
+    href: "https://github.com/microsoft/vscode/tree/33e1911ac9cf",
+    commit: "33e1911ac9cf",
+    files: 12966,
+    violations: 677,
+    locguardMs: 1455,
+    wcMs: 4286
   },
   {
-    title: "Changed-file fast path",
-    body: "Bare checks ask Git for current changes so large repositories do not repeatedly rescan unchanged source files."
+    name: "Kubernetes",
+    repo: "kubernetes/kubernetes",
+    href: "https://github.com/kubernetes/kubernetes/tree/e81f39c0e03c",
+    commit: "e81f39c0e03c",
+    files: 12362,
+    violations: 532,
+    locguardMs: 1889,
+    wcMs: 4008
   },
   {
-    title: "Stops at the threshold",
-    body: "Once a file is proven to exceed its limit, locguard stops reading it unless exact counts were requested."
+    name: "Rust",
+    repo: "rust-lang/rust",
+    href: "https://github.com/rust-lang/rust/tree/8925ea358a0f",
+    commit: "8925ea358a0f",
+    files: 37967,
+    violations: 664,
+    locguardMs: 2586,
+    wcMs: 13156
   },
   {
-    title: "Agent-friendly policy",
-    body: "Generated/vendor code is quiet by default and exact legacy exemptions can stay invisible to everyday agents."
+    name: "Linux",
+    repo: "torvalds/linux",
+    href: "https://github.com/torvalds/linux/tree/77ae27fd98f3",
+    commit: "77ae27fd98f3",
+    files: 67433,
+    violations: 8758,
+    locguardMs: 6513,
+    wcMs: 33306
   }
 ];
+
+const proofPoints = [
+  {
+    index: "01",
+    title: "Zero config",
+    body: "Install it and run it. Create .agents/.locguard.toml only when a repository actually needs custom policy."
+  },
+  {
+    index: "02",
+    title: "Changed files by default",
+    body: "Bare locguard asks Git for staged, unstaged, and untracked source changes instead of rescanning the whole tree."
+  },
+  {
+    index: "03",
+    title: "Stops at the proof",
+    body: "A 20,000-line offender does not need 20,000 lines counted. Once line 1,001 is proven, locguard can stop reading."
+  },
+  {
+    index: "04",
+    title: "Built for agent-heavy repos",
+    body: "Generated and vendor trees stay quiet, while exact legacy exemptions let new files face a strict rule without old debt becoming agent context."
+  }
+];
+
+const maxSpeedup = Math.max(...benchmarks.map((row) => row.wcMs / row.locguardMs));
+const formatSeconds = (ms: number) => `${(ms / 1000).toFixed(ms >= 10000 ? 1 : 2)}s`;
+const formatFiles = (files: number) => new Intl.NumberFormat("en-US").format(files);
 ---
 
 <BaseLayout
@@ -31,44 +84,160 @@ const proofPoints = [
   siteConfig={siteConfig}
   primaryNav={primaryNav}
 >
-  <section class="hero shell">
-    <div class="hero__copy">
-      <p class="section-label">Source file size guard</p>
-      <h1>Keep every source file small enough to understand, edit, and merge safely.</h1>
-      <p class="hero__lede">
-        locguard is a fast physical-line limit for codebases. It works without setup, respects
-        Git and generated-code conventions, and gives coding agents the same simple invariant
-        in every repository.
+  <section class="landing-hero shell">
+    <div class="landing-hero__copy">
+      <div class="landing-kicker"><span></span> architectural guardrail for source files</div>
+      <h1>Small files.<br /><em>Fewer collisions.</em></h1>
+      <p class="landing-hero__lede">
+        locguard is a tiny, zero-config CLI that keeps source files below a physical line limit.
+        It is intentionally language-agnostic, Git-aware, and fast enough to live in every agent check loop.
       </p>
-      <div class="hero__actions">
-        <a class="button button--solid" href="/docs/quickstart">Quickstart</a>
-        <a class="button button--ghost" href="/docs/command-reference">Command reference</a>
+      <div class="landing-install" aria-label="Install locguard with npm">
+        <span class="landing-install__prompt">$</span>
+        <code>npm install -g locguard-cli</code>
+      </div>
+      <div class="landing-hero__actions">
+        <a class="button button--solid" href="/docs/quickstart">Get started</a>
+        <a class="button button--ghost" href="https://github.com/amxv/locguard">View source ↗</a>
+      </div>
+      <div class="landing-hero__meta" aria-label="Default behavior">
+        <span><strong>1,000</strong> line limit</span>
+        <span><strong>90%</strong> warning band</span>
+        <span><strong>8</strong> worker cap</span>
       </div>
     </div>
-    <aside class="hero__panel">
-      <p class="hero__panel-label">Everyday loop</p>
-      <div class="hero__terminal">
-        <span>$ locguard</span>
-        <span>✓ 7 files checked</span>
-        <span>$ locguard scan</span>
-        <span>✓ 1,443 files checked</span>
+
+    <aside class="landing-terminal" aria-label="locguard command example">
+      <div class="landing-terminal__chrome">
+        <span></span><span></span><span></span>
+        <small>repo / main</small>
+      </div>
+      <div class="landing-terminal__body">
+        <p><i>$</i> locguard</p>
+        <p class="is-pass">✓ 7 files checked</p>
+        <p class="landing-terminal__gap"><i>$</i> locguard scan</p>
+        <p class="is-fail">FAIL&nbsp; src/runtime.rs&nbsp; &gt;1000</p>
+        <p class="is-fail">FAIL&nbsp; src/server.ts&nbsp;&nbsp; &gt;1000</p>
+        <p class="is-muted">2 files exceed the 1000-line limit</p>
+      </div>
+      <div class="landing-terminal__footer">
+        <span>physical lines</span>
+        <span>exit 1</span>
       </div>
     </aside>
   </section>
 
-  <section class="shell section-grid">
-    <div class="section-heading">
-      <p class="section-label">Simple invariant</p>
-      <h2>Physical file length, deliberately.</h2>
+  <section class="landing-performance shell" id="benchmarks">
+    <div class="landing-section-head">
+      <div>
+        <p class="section-label">Measured on real codebases</p>
+        <h2>Faster than <code>wc</code>, even when <code>wc</code> gets the file list for free.</h2>
+      </div>
       <p>
-        Comments and blank lines count because locguard is not measuring semantic complexity.
-        It is keeping source files modular, reducing shared edit hotspots, and limiting the
-        amount of context a human or coding agent must load to work safely.
+        Median wall time on an M1 MacBook Air. locguard is timed end-to-end; the comparison
+        precomputes a NUL-delimited source list using the same default extension/exclusion policy,
+        removes binary-like paths, then times only <code>xargs -0 wc -l</code>.
       </p>
     </div>
-    <div class="proof-grid">
+
+    <div class="landing-benchmark-chart" aria-label="Benchmark speedup compared with wc">
+      {benchmarks.map((row) => {
+        const speedup = row.wcMs / row.locguardMs;
+        return (
+          <article class="landing-benchmark-row">
+            <div class="landing-benchmark-row__repo">
+              <a href={row.href}>
+                <strong>{row.name}</strong>
+                <span>{row.repo}</span>
+              </a>
+              <small>
+                {formatFiles(row.files)} source files · {formatFiles(row.violations)} over 1k · {row.commit}
+              </small>
+            </div>
+            <div class="landing-benchmark-row__graph">
+              <div class="landing-benchmark-row__track">
+                <div
+                  class="landing-benchmark-row__bar"
+                  style={`--bar-width: ${(speedup / maxSpeedup) * 100}%`}
+                ></div>
+              </div>
+              <div class="landing-benchmark-row__numbers">
+                <strong>{speedup.toFixed(2)}× faster</strong>
+                <span>{formatSeconds(row.locguardMs)} locguard · {formatSeconds(row.wcMs)} wc</span>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+
+    <div class="landing-benchmark-note">
+      <div>
+        <strong>Conservative by design.</strong>
+        <p>
+          The <code>wc</code> baseline pays no Git discovery, source-type filtering, generated/vendor exclusion,
+          metadata, or binary-like-file detection cost. locguard pays all of them inside the measured command.
+          Linux contains case-colliding tracked paths on macOS; both commands use the same materialized checkout.
+        </p>
+      </div>
+      <div class="landing-benchmark-note__machine">
+        <span>8 measured · 3 warmups</span>
+        <span>Apple M1 · 8 GB</span>
+        <span>macOS 26.3.1</span>
+        <span>Aug 21, 2026</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-why shell">
+    <div class="landing-section-head landing-section-head--compact">
+      <div>
+        <p class="section-label">The whole trick</p>
+        <h2>Do less work.</h2>
+      </div>
+      <p>locguard optimizes the question it actually needs to answer: “did this file cross the limit?”</p>
+    </div>
+
+    <div class="landing-pipeline" aria-label="locguard scanning pipeline">
+      <div class="landing-pipeline__step">
+        <span>01</span>
+        <strong>Ask Git</strong>
+        <p>Changed files for the everyday loop; the full tracked + nonignored tree for CI.</p>
+      </div>
+      <div class="landing-pipeline__arrow">→</div>
+      <div class="landing-pipeline__step">
+        <span>02</span>
+        <strong>Reject noise</strong>
+        <p>Extensions and high-confidence generated, dependency, vendor, cache, and build paths first.</p>
+      </div>
+      <div class="landing-pipeline__arrow">→</div>
+      <div class="landing-pipeline__step">
+        <span>03</span>
+        <strong>Read in parallel</strong>
+        <p>A bounded worker pool reuses buffers. No AST, parser, or UTF-8 decoding sits in the hot path.</p>
+      </div>
+      <div class="landing-pipeline__arrow">→</div>
+      <div class="landing-pipeline__step landing-pipeline__step--signal">
+        <span>04</span>
+        <strong>Stop at 1,001</strong>
+        <p>The moment the violation is proven, the rest of that file is irrelevant unless you asked for <code>--exact</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-principles shell">
+    <div class="landing-section-head landing-section-head--compact">
+      <div>
+        <p class="section-label">Opinionated defaults</p>
+        <h2>A boring rule agents can trust.</h2>
+      </div>
+      <p>No semantic scoring system, language parser, or per-repo bootstrap script to keep in sync.</p>
+    </div>
+
+    <div class="landing-proof-grid">
       {proofPoints.map((item) => (
-        <article class="proof-card">
+        <article class="landing-proof-card">
+          <span>{item.index}</span>
           <h3>{item.title}</h3>
           <p>{item.body}</p>
         </article>
@@ -76,17 +245,45 @@ const proofPoints = [
     </div>
   </section>
 
-  <section class="shell docs-teaser">
-    <div class="section-heading">
-      <p class="section-label">Documentation</p>
-      <h2>Start with no config. Customize only where your repository needs it.</h2>
+  <section class="landing-config shell">
+    <div class="landing-config__copy">
+      <p class="section-label">Legacy debt without legacy instructions</p>
+      <h2>Grandfather exact old files. Keep the rule strict everywhere else.</h2>
+      <p>
+        Existing oversized files can disappear from normal agent checks without teaching agents what to ignore.
+        Exemptions are exact paths, not globs, so new files and renamed copies are caught automatically.
+      </p>
+      <a href="/docs/configuration">Configuration guide →</a>
     </div>
-    <div class="docs-teaser__grid">
-      {docs.map((entry) => (
-        <a class="docs-teaser__card" href={`/docs/${entry.id}`}>
-          <span>{entry.data.category}</span>
-          <h3>{entry.data.title}</h3>
-          <p>{entry.data.summary ?? entry.data.description}</p>
+    <pre class="landing-config__code"><code><span># .agents/.locguard.toml</span>
+limit = 1000
+warn_percent = 90
+
+[exempt]
+files = [
+  "src/legacy/runtime.rs",
+  "src/ui/old_screen.tsx",
+]</code></pre>
+  </section>
+
+  <section class="landing-docs shell">
+    <div class="landing-section-head landing-section-head--compact">
+      <div>
+        <p class="section-label">Documentation</p>
+        <h2>Nothing to initialize until you want to customize.</h2>
+      </div>
+      <p>Start with <code>locguard</code>. Use <code>locguard scan</code> for the authoritative CI/pre-push invariant.</p>
+    </div>
+    <div class="landing-docs__grid">
+      {docs.map((entry, index) => (
+        <a class="landing-doc-card" href={`/docs/${entry.id}`}>
+          <span>{String(index + 1).padStart(2, "0")}</span>
+          <div>
+            <small>{entry.data.category}</small>
+            <h3>{entry.data.title}</h3>
+            <p>{entry.data.summary ?? entry.data.description}</p>
+          </div>
+          <i>↗</i>
         </a>
       ))}
     </div>

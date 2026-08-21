@@ -2,7 +2,7 @@ use std::fs::{self, File};
 use std::io::{ErrorKind, Read};
 use std::path::PathBuf;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use rayon::ThreadPoolBuilder;
 use rayon::prelude::*;
 
@@ -72,6 +72,16 @@ fn scan_one(task: &ScanTask, buffer: &mut [u8], exact: bool) -> Result<FileScan>
 
     let mut file = File::open(&task.path)
         .with_context(|| format!("failed to open source file '{}'", task.path.display()))?;
+
+    // We already needed metadata to avoid following symlinks, so file size is
+    // free information here. A physical line needs at least one byte. If the
+    // entire file is smaller than the warning threshold, it cannot warn or
+    // fail and there is no reason to issue a read syscall.
+    let warn_at = u64::try_from(task.limits.warn_at()).unwrap_or(u64::MAX);
+    if metadata.len() < warn_at {
+        return Ok(file_scan(task, FileOutcome::Pass { lines: None }));
+    }
+
     let outcome = if exact {
         count_exact(&mut file, buffer, task.limits.limit, &task.path)?
     } else {
@@ -102,7 +112,9 @@ fn count_to_limit<R: Read>(
 
         let chunk = &buffer[..read];
         if first_chunk {
-            reject_binary_chunk(chunk, path)?;
+            if chunk.contains(&0) {
+                return Ok(FileOutcome::Skipped);
+            }
             first_chunk = false;
         }
 
@@ -145,7 +157,9 @@ fn count_exact<R: Read>(
         }
         let chunk = &buffer[..read];
         if first_chunk {
-            reject_binary_chunk(chunk, path)?;
+            if chunk.contains(&0) {
+                return Ok(FileOutcome::Skipped);
+            }
             first_chunk = false;
         }
         bytes_seen = true;
@@ -161,16 +175,6 @@ fn count_exact<R: Read>(
     } else {
         Ok(FileOutcome::Pass { lines: Some(lines) })
     }
-}
-
-fn reject_binary_chunk(chunk: &[u8], path: &std::path::Path) -> Result<()> {
-    if chunk.contains(&0) {
-        bail!(
-            "binary-looking source file contains a NUL byte: {}",
-            path.display()
-        );
-    }
-    Ok(())
 }
 
 fn file_scan(task: &ScanTask, outcome: FileOutcome) -> FileScan {
@@ -228,5 +232,11 @@ mod tests {
             count(b"one\ntwo\nthree\n", 2),
             FileOutcome::Violation { exact_lines: None }
         ));
+    }
+
+    #[test]
+    fn skips_binary_like_source_bytes() {
+        let utf16le = b"a\0\n\0b\0\n\0";
+        assert!(matches!(count(utf16le, 2), FileOutcome::Skipped));
     }
 }

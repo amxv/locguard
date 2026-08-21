@@ -1,6 +1,6 @@
 [package]
 name = "locguard"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.98.0"
 description = "A fast, zero-config CLI that keeps source files below a configurable line limit"

@@ -85,19 +85,21 @@ locguard scan --json
 
 - Git supplies changed/full candidate paths and ignore semantics.
 - Source-type and generated/vendor filters run before files are opened.
+- File metadata can prove tiny files are below the warning threshold without reading their contents.
 - Violating files stop being read as soon as line `limit + 1` is proven.
 - File scans run with modest parallelism and reusable buffers.
 - Newlines are counted directly from bytes.
+- Source candidates whose first 64 KiB contain a NUL byte are treated as binary-like and skipped instead of being decoded or guessed at.
 
 Physical lines include comments and blank lines because the invariant is about keeping files small, modular, merge-friendly, and easy for coding agents to navigate.
 
 ## Development
 
 ```bash
-just check-fast
-just check
-just docs-check
-just docs-build
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
+cd docs && bun install --frozen-lockfile && bun run test:vercel && bun run check && bun run build
 ```
 
 See the [documentation](https://locguard.ashray.xyz) for configuration and the complete command reference.
