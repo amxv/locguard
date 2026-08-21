@@ -73,7 +73,6 @@ const proofPoints = [
   }
 ];
 
-const maxBenchmarkMs = Math.max(...benchmarks.flatMap((row) => [row.locguardMs, row.wcMs]));
 const formatSeconds = (ms: number) => `${(ms / 1000).toFixed(ms >= 10000 ? 1 : 2)}s`;
 const formatFiles = (files: number) => new Intl.NumberFormat("en-US").format(files);
 ---
@@ -141,9 +140,9 @@ const formatFiles = (files: number) => new Intl.NumberFormat("en-US").format(fil
     </div>
 
     <div class="landing-benchmark-legend" aria-label="Benchmark series">
-      <span><i class="is-locguard"></i>locguard</span>
       <span><i class="is-wc"></i>wc</span>
-      <small>wall time · shared scale · lower is better</small>
+      <span><i class="is-locguard"></i>locguard</span>
+      <small>each repo normalized to wc = 100% · lower is better</small>
     </div>
 
     <div class="landing-benchmark-chart" aria-label="Benchmark wall time for locguard and wc">
@@ -164,25 +163,25 @@ const formatFiles = (files: number) => new Intl.NumberFormat("en-US").format(fil
               <div class="landing-benchmark-row__bars">
                 <div class="landing-benchmark-row__series">
                   <div class="landing-benchmark-row__series-head">
-                    <span><i class="is-locguard"></i>locguard</span>
-                    <strong>{formatSeconds(row.locguardMs)}</strong>
-                  </div>
-                  <div class="landing-benchmark-row__track">
-                    <div
-                      class="landing-benchmark-row__bar landing-benchmark-row__bar--locguard"
-                      style={`--bar-width: ${(row.locguardMs / maxBenchmarkMs) * 100}%`}
-                    ></div>
-                  </div>
-                </div>
-                <div class="landing-benchmark-row__series">
-                  <div class="landing-benchmark-row__series-head">
                     <span><i class="is-wc"></i>wc</span>
                     <strong>{formatSeconds(row.wcMs)}</strong>
                   </div>
                   <div class="landing-benchmark-row__track">
                     <div
                       class="landing-benchmark-row__bar landing-benchmark-row__bar--wc"
-                      style={`--bar-width: ${(row.wcMs / maxBenchmarkMs) * 100}%`}
+                      style="--bar-width: 100%"
+                    ></div>
+                  </div>
+                </div>
+                <div class="landing-benchmark-row__series">
+                  <div class="landing-benchmark-row__series-head">
+                    <span><i class="is-locguard"></i>locguard</span>
+                    <strong>{formatSeconds(row.locguardMs)}</strong>
+                  </div>
+                  <div class="landing-benchmark-row__track">
+                    <div
+                      class="landing-benchmark-row__bar landing-benchmark-row__bar--locguard"
+                      style={`--bar-width: ${(row.locguardMs / row.wcMs) * 100}%`}
                     ></div>
                   </div>
                 </div>
